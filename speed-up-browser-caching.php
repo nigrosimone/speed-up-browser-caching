@@ -3,7 +3,7 @@
  Plugin Name: Speed Up - Browser Caching
  Plugin URI: http://wordpress.org/plugins/speed-up-browser-caching/
  Description: Help browser to cache a local copy of static files and improve page load times.
- Version: 1.0.1
+ Version: 1.0.2
  Author: Simone Nigro
  Author URI: https://profiles.wordpress.org/nigrosimone
  License: GPLv2 or later
@@ -52,8 +52,8 @@ class SpeedUp_BrowserCaching {
      */
     private function __construct(){
         
-        self::$HTACCESS_SECTION_START = '# BEGIN '.SELF::HTACCESS_SECTION;
-        self::$HTACCESS_SECTION_END   = '# END '.SELF::HTACCESS_SECTION;
+    	self::$HTACCESS_SECTION_START = '# BEGIN '.self::HTACCESS_SECTION;
+    	self::$HTACCESS_SECTION_END   = '# END '.self::HTACCESS_SECTION;
         
         register_activation_hook( __FILE__, array('SpeedUp_BrowserCaching', 'install') );
         register_deactivation_hook( __FILE__, array('SpeedUp_BrowserCaching', 'uninstall') );
