@@ -3,8 +3,8 @@ Contributors: nigro.simone
 Donate link: http://paypal.me/snwp
 Tags: javascript, scripts, css, style, cache, caching, browser, performance, seo, optimize, front-end optimization, performance, speed, web performance optimization, wordpress optimization tool
 Requires at least: 3.5
-Tested up to: 5.7
-Stable tag: 1.0.8
+Tested up to: 5.9
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ Configurations are not required! You just have to install it and after the plugi
 2. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Changelog ==
+
+= 1.0.9 =
+* Tested up to Wordpress 5.9
 
 = 1.0.8 =
 * Tested up to Wordpress 5.7
