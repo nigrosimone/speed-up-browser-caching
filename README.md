@@ -90,9 +90,14 @@ Every check above also runs in CI on each pull request, across PHP 7.2 → 8.4, 
 them block a merge. The one exception is WordPress Plugin Check: it needs Docker and npm,
 so an infrastructure hiccup there must not fail a release.
 
-`.githooks/pre-commit` runs the same checks against staged files only, in about a second.
-It's a convenience, not a guarantee — the guarantee is CI, which can't be bypassed. Skip
-it once with `git commit --no-verify`.
+A pre-commit hook runs the same checks against staged files only, in about a second.
+`composer install` installs it for you. It's a convenience, not a guarantee — the
+guarantee is CI, which can't be bypassed. Skip it once with `git commit --no-verify`.
+
+The CI workflows and the helper commands are not defined here: they come from
+[`nigrosimone/wp-plugin-ci`](https://github.com/nigrosimone/wp-plugin-ci), shared by every
+`speed-up-*` plugin so there's one copy to maintain instead of eight. This repository only
+declares which version of PHP to support and which findings are accepted.
 
 ### Releases
 
@@ -128,10 +133,12 @@ readme.txt                     WordPress.org readme — the source of the change
 index.html                     empty file, prevents directory listing
 .wordpress-org/                banner and icon for the WordPress.org page
 .distignore                    what never ships to WordPress.org
-.githooks/                     git hooks, activated by composer install
-bin/                           helper scripts used by CI
 tests/                         PHPUnit tests
+.github/workflows/             thin callers into nigrosimone/wp-plugin-ci
 ```
+
+`.githooks/` is not in the repository: `composer install` generates it from the shared
+package, so the hook can't drift between plugins.
 
 ## Contributing
 

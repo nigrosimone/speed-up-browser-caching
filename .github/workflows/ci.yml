@@ -1,5 +1,7 @@
 name: CI
 
+# La logica sta in nigrosimone/wp-plugin-ci, condivisa da tutti i plugin.
+
 on:
   push:
     branches: [main]
@@ -14,132 +16,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
-  # ---------------------------------------------------------------------------
-  # BLOCCANTI: se falliscono, la PR non si merga.
-  # ---------------------------------------------------------------------------
-
-  lint:
-    name: Sintassi PHP ${{ matrix.php }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['7.2', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-
-      - name: php -l su tutti i file pubblicati
-        run: php bin/lint.php
-
-  compat:
-    name: Compatibilita PHP 7.0+
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      - uses: ramsey/composer-install@v4
-
-      # Analisi statica: copre anche 7.0 e 7.1, che non sono nella matrice runtime.
-      - name: PHPCompatibilityWP
-        run: composer compat
-
-  versions:
-    name: Coerenza versioni
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      # Version: nell'header == Stable tag nel readme, e changelog presente.
-      - name: Verifica header, Stable tag e changelog
-        run: php bin/check-version.php
-
-  test:
-    name: Test PHP ${{ matrix.php }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['7.4', '8.3']
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-
-      - uses: ramsey/composer-install@v4
-
-      - name: PHPUnit
-        run: vendor/bin/phpunit
-
-  coding-standards:
-    name: WordPress Coding Standards
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      - uses: ramsey/composer-install@v4
-
-      # Il conteggio delle violazioni e' a zero e deve restarci: se serve
-      # disattivare una regola, si disattiva in phpcs.xml.dist con una
-      # motivazione, non si lascia passare la violazione.
-      - name: PHPCS
-        run: vendor/bin/phpcs --report=full --report-summary --no-colors
-
-  # ---------------------------------------------------------------------------
-  # INFORMATIVO: dipende da Docker e da 391 pacchetti npm, quindi un problema
-  # infrastrutturale non deve bloccare un rilascio.
-  # ---------------------------------------------------------------------------
-
-  plugin-check:
-    name: WordPress Plugin Check (informativo)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v5
-
-      # Il controllo va fatto sul pacchetto che riceve l'utente, non sul repo:
-      # altrimenti segnala file di sviluppo (.gitignore, phpunit.xml.dist, .github)
-      # che .distignore esclude gia' dalla pubblicazione.
-      - name: Ricostruisci il pacchetto pubblicato
-        run: bash bin/build-dist.sh build
-
-      # Stessi controlli usati dal team review di wordpress.org.
+  ci:
+    uses: nigrosimone/wp-plugin-ci/.github/workflows/plugin-ci.yml@v1
+    with:
+      min-php: '7.0-'
+      # Rilievi noti e consapevolmente accettati: il plugin manipola il .htaccess
+      # con le funzioni native di PHP invece che con WP_Filesystem. E'
+      # l'implementazione originale, in produzione dal 2016, e migrarla e' un
+      # refactor a se' stante. Su una riga sola e senza spazi: l'action espande
+      # questo valore in shell senza quote.
       #
-      # ignore-codes elenca i rilievi noti e consapevolmente accettati. Senza
-      # questo elenco il job resterebbe rosso per sempre e smetterebbe di essere
-      # un segnale: cosi' invece e' verde, e se diventa rosso e' comparso
-      # qualcosa di NUOVO. Ogni voce va tolta da qui quando viene risolta.
-      #
-      # Tutti i codici sotto riguardano la stessa cosa: il plugin manipola il
-      # .htaccess con le funzioni native di PHP invece che con WP_Filesystem.
-      # E' l'implementazione originale, in produzione dal 2016. Migrare a
-      # WP_Filesystem e' un refactor a se' stante, non una correzione.
-      - uses: wordpress/plugin-check-action@v1
-        with:
-          build-dir: './build'
-          # Su una riga sola e senza spazi: l'action espande questo valore in shell
-          # senza quote, quindi newline o spazi lo spezzerebbero in piu' argomenti.
-          ignore-codes: 'WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fwrite,WordPress.WP.AlternativeFunctions.file_system_operations_fclose,WordPress.WP.AlternativeFunctions.file_system_operations_is_writable,WordPress.WP.AlternativeFunctions.rename_rename,PluginCheck.CodeAnalysis.WriteFile.ABSPATHDetected'
+      # Lo stesso elenco e' escluso in phpcs.xml.dist: le due liste vanno tenute
+      # allineate, e ogni voce va tolta da entrambe quando viene risolta.
+      plugin-check-ignore-codes: 'WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fwrite,WordPress.WP.AlternativeFunctions.file_system_operations_fclose,WordPress.WP.AlternativeFunctions.file_system_operations_is_writable,WordPress.WP.AlternativeFunctions.rename_rename,PluginCheck.CodeAnalysis.WriteFile.ABSPATHDetected'
