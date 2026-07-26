@@ -12,6 +12,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Ripubblica anche se il tag esiste gia (per riprovare un deploy fallito)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -40,16 +46,23 @@ jobs:
 
       - name: Confronta la versione dichiarata con i tag esistenti
         id: detect
+        env:
+          FORCE: ${{ inputs.force }}
         run: |
           VERSION="$(php bin/plugin-version.php)"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Il tag v$VERSION esiste gia': nessun rilascio da fare."
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-          else
+          if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
             echo "Versione $VERSION non ancora rilasciata: si procede."
             echo "should_release=true" >> "$GITHUB_OUTPUT"
+          elif [ "$FORCE" = "true" ]; then
+            # Serve quando il tag e' stato creato ma il deploy su SVN e' fallito:
+            # senza questa via d'uscita un nuovo tentativo non farebbe nulla.
+            echo "Il tag v$VERSION esiste, ma e' stato richiesto force: si riprova."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Il tag v$VERSION esiste gia': nessun rilascio da fare."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
           fi
 
   release:
@@ -84,13 +97,20 @@ jobs:
         run: vendor/bin/phpunit
 
       # ---- Tag ------------------------------------------------------------
+      # Il tag viene creato prima del deploy: se la pubblicazione fallisce, agli
+      # utenti non e' arrivato nulla. Il passo e' idempotente per permettere di
+      # riprovare con "force" senza dover cancellare il tag a mano.
       - name: Crea il tag v${{ needs.check.outputs.version }}
         run: |
+          TAG="v${{ needs.check.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Il tag $TAG esiste gia': lo riuso."
+            exit 0
+          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ needs.check.outputs.version }}" \
-            -m "Release ${{ needs.check.outputs.version }}"
-          git push origin "v${{ needs.check.outputs.version }}"
+          git tag -a "$TAG" -m "Release ${{ needs.check.outputs.version }}"
+          git push origin "$TAG"
 
       # ---- Pubblicazione su wordpress.org ---------------------------------
       # L'action sincronizza trunk/ e crea tags/VERSION su plugins.svn.wordpress.org,
