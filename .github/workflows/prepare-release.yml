@@ -57,6 +57,18 @@ jobs:
           body: |
             Rilascio della versione **${{ inputs.version }}**.
 
+            > [!IMPORTANT]
+            > **La CI su questa PR non parte da sola.** Vai su
+            > [**Actions**](../../actions) e approva la run in attesa
+            > ("Approve and run"), altrimenti i check richiesti non compaiono
+            > mai e la PR resta non mergiabile.
+            >
+            > Non e' un errore: questa PR e' stata aperta dal `GITHUB_TOKEN`, e
+            > GitHub non fa partire workflow per eventi generati da se stesso,
+            > per evitare loop infiniti. Si eviterebbe con un Personal Access
+            > Token, ma per una manciata di rilasci l'anno non vale una
+            > credenziale in piu' da gestire e far scadere.
+
             | | |
             |---|---|
             | Versione | `${{ inputs.version }}` |
@@ -70,4 +82,8 @@ jobs:
             Controlla il diff qui sotto. **Al merge di questa PR** il plugin viene
             taggato `v${{ inputs.version }}` e pubblicato automaticamente su
             wordpress.org: non serve nessun altro intervento manuale.
+
+            Se il deploy su wordpress.org fallisce, il tag risultera' creato ma
+            agli utenti non sara' arrivato nulla: correggi e rilancia
+            **Actions -> Rilascio** spuntando `force`.
           labels: release
