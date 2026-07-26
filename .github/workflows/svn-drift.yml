@@ -21,7 +21,7 @@ jobs:
     env:
       SLUG: speed-up-browser-caching
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Installa subversion
         run: sudo apt-get update && sudo apt-get install -y subversion

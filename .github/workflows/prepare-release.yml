@@ -30,7 +30,7 @@ jobs:
     name: Bump versione e apri PR
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -48,7 +48,7 @@ jobs:
         run: php bin/check-version.php "${{ inputs.version }}"
 
       - name: Apri la Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: release/v${{ inputs.version }}
           delete-branch: true
