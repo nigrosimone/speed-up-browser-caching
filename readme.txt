@@ -5,7 +5,7 @@ Tags: browser caching, leverage browser caching, expires headers, gzip compressi
 Requires at least: 6.0
 Requires PHP: 7.0
 Tested up to: 7.0
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,6 +23,10 @@ Configurations are not required! You just have to install it and after the plugi
 2. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Changelog ==
+
+= 1.0.15 =
+* Update the font MIME types to RFC 8081 and declare JavaScript as text/javascript per RFC 9239
+* Add Cache-Control immutable to assets carrying a version in the URL, so browsers stop revalidating them on reload
 
 = 1.0.14 =
 * Declare minimum requirements: WordPress 6.0 and PHP 7.0
