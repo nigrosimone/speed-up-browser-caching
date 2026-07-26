@@ -61,7 +61,7 @@ the file exactly as it was. Your existing rules are never rewritten, only surrou
   server config there, not in `.htaccess`.
 - A **writable `.htaccess`** in the WordPress root. If it isn't writable the plugin does
   nothing, rather than breaking the site.
-- WordPress 3.5 or newer.
+- WordPress 6.0 or newer, PHP 7.0 or newer.
 
 ## Installation
 
