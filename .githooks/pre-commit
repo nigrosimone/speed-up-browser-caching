@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# Hook pre-commit: gli stessi controlli bloccanti della CI, ma solo sui file in
+# stage, cosi' il feedback arriva in circa un secondo invece che in due minuti.
+#
+# Si installa da solo con "composer install" (vedi bin/install-hooks.php).
+# Per saltarlo una volta: git commit --no-verify
+#
+# Nota: questo hook e' una comodita', non una garanzia. La garanzia e' la CI,
+# che non si puo' aggirare.
+
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+
+# Solo i file PHP aggiunti o modificati in questo commit.
+STAGED_PHP="$(git diff --cached --name-only --diff-filter=ACM -- '*.php')"
+
+FAILED=0
+
+fail() {
+    echo ""
+    echo "  pre-commit: $1"
+    FAILED=1
+}
+
+if [ -n "$STAGED_PHP" ]; then
+    # 1) Sintassi
+    while IFS= read -r file; do
+        [ -f "$file" ] || continue
+        if ! php -l "$file" > /dev/null 2>&1; then
+            php -l "$file"
+            fail "errore di sintassi in $file"
+        fi
+    done <<< "$STAGED_PHP"
+
+    # 2) Stile (il conteggio deve restare a zero)
+    if [ -x vendor/bin/phpcs ]; then
+        # shellcheck disable=SC2086
+        if ! vendor/bin/phpcs --report=full $STAGED_PHP; then
+            fail "violazioni di stile. Prova: composer phpcbf"
+        fi
+    fi
+fi
+
+# 3) Test: durano meno di un secondo, conviene averli sempre.
+if [ -x vendor/bin/phpunit ]; then
+    if ! vendor/bin/phpunit --no-coverage > /dev/null 2>&1; then
+        vendor/bin/phpunit --no-coverage
+        fail "test falliti"
+    fi
+fi
+
+# 4) Coerenza delle versioni, se il commit tocca readme o header del plugin.
+if echo "$STAGED_PHP" | grep -q . || git diff --cached --name-only | grep -q '^readme\.txt$'; then
+    if ! php bin/check-version.php > /dev/null 2>&1; then
+        php bin/check-version.php
+        fail "versioni non coerenti tra header del plugin e readme.txt"
+    fi
+fi
+
+if [ "$FAILED" -ne 0 ]; then
+    echo ""
+    echo "  Commit annullato. Per forzarlo comunque: git commit --no-verify"
+    echo ""
+    exit 1
+fi
+
+exit 0

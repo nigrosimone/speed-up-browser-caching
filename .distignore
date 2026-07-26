@@ -3,6 +3,7 @@
 
 /.git
 /.github
+/.githooks
 /.wordpress-org
 /tests
 /bin

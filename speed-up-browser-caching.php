@@ -19,8 +19,8 @@ class SpeedUp_BrowserCaching {
 	const PLUGIN_NAMESPACE = 'speed-up-browser-caching';
 	const HTACCESS_SECTION = 'SpeedUp_BrowserCaching';
 
-	private static $HTACCESS_SECTION_START = null;
-	private static $HTACCESS_SECTION_END   = null;
+	private static $htaccess_section_start = null;
+	private static $htaccess_section_end   = null;
 
 	/**
 	 * Instance of the object.
@@ -54,8 +54,8 @@ class SpeedUp_BrowserCaching {
 	 */
 	private function __construct() {
 
-		self::$HTACCESS_SECTION_START = '# BEGIN ' . self::HTACCESS_SECTION;
-		self::$HTACCESS_SECTION_END   = '# END ' . self::HTACCESS_SECTION;
+		self::$htaccess_section_start = '# BEGIN ' . self::HTACCESS_SECTION;
+		self::$htaccess_section_end   = '# END ' . self::HTACCESS_SECTION;
 
 		register_activation_hook( __FILE__, array( 'SpeedUp_BrowserCaching', 'install' ) );
 		register_deactivation_hook( __FILE__, array( 'SpeedUp_BrowserCaching', 'uninstall' ) );
@@ -89,7 +89,7 @@ class SpeedUp_BrowserCaching {
 	 */
 	public static function add_htaccess_rule() {
 
-		if ( empty( self::$HTACCESS_SECTION_START ) || empty( self::$HTACCESS_SECTION_END ) ) {
+		if ( empty( self::$htaccess_section_start ) || empty( self::$htaccess_section_end ) ) {
 			return false;
 		}
 
@@ -110,13 +110,17 @@ class SpeedUp_BrowserCaching {
 			$htaccess_is_edited = false;
 
 			// add begin of section
-			array_unshift( $my_lines, "\n" . self::$HTACCESS_SECTION_START . "\n" );
+			array_unshift( $my_lines, "\n" . self::$htaccess_section_start . "\n" );
 
 			// add end of section
-			array_push( $my_lines, "\n" . self::$HTACCESS_SECTION_END . "\n" );
+			array_push( $my_lines, "\n" . self::$htaccess_section_end . "\n" );
 
-			// Open file for writing
-			if ( $file_handle = @fopen( $temp_htaccess, 'w' ) ) {
+			// Open file for writing. Il fallimento di fopen() e' gestito dal ramo
+			// successivo: l'avviso di PHP finirebbe solo nel log del sito, senza aggiungere
+			// informazione, quindi resta silenziato.
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			$file_handle = @fopen( $temp_htaccess, 'w' );
+			if ( $file_handle ) {
 
 				// add the new line at the beginning
 				$new_lines = array_merge( $my_lines, $old_lines );
@@ -150,7 +154,7 @@ class SpeedUp_BrowserCaching {
 	 */
 	public static function remove_htaccess_rule() {
 
-		if ( empty( self::$HTACCESS_SECTION_START ) || empty( self::$HTACCESS_SECTION_END ) ) {
+		if ( empty( self::$htaccess_section_start ) || empty( self::$htaccess_section_end ) ) {
 			return false;
 		}
 
@@ -168,8 +172,12 @@ class SpeedUp_BrowserCaching {
 
 			$htaccess_is_edited = false;
 
-			// Open file for writing
-			if ( $file_handle = @fopen( $temp_htaccess, 'w' ) ) {
+			// Open file for writing. Il fallimento di fopen() e' gestito dal ramo
+			// successivo: l'avviso di PHP finirebbe solo nel log del sito, senza aggiungere
+			// informazione, quindi resta silenziato.
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			$file_handle = @fopen( $temp_htaccess, 'w' );
+			if ( $file_handle ) {
 
 				$speed_up_directives = null;
 
@@ -179,17 +187,17 @@ class SpeedUp_BrowserCaching {
 					$line = $old_lines[ $i ];
 
 					// when we find the first line of Speed Up directives
-					if ( strpos( $line, self::$HTACCESS_SECTION_START ) === 0 ) {
+					if ( strpos( $line, self::$htaccess_section_start ) === 0 ) {
 						$speed_up_directives = true;
 					}
 
 					// remove the line if is in a Speed Up section
-					if ( $speed_up_directives === true ) {
+					if ( true === $speed_up_directives ) {
 						unset( $old_lines[ $i ] );
 					}
 
 					// when we find the last line of Speed Up directives
-					if ( strpos( $line, self::$HTACCESS_SECTION_END ) === 0 ) {
+					if ( strpos( $line, self::$htaccess_section_end ) === 0 ) {
 						$speed_up_directives = false;
 						break; // end of operation, exit for
 					}
@@ -197,7 +205,7 @@ class SpeedUp_BrowserCaching {
 				unset( $i, $e );
 
 				// mhhh this is strange!
-				if ( $speed_up_directives !== false ) {
+				if ( false !== $speed_up_directives ) {
 					fclose( $file_handle );
 					return false;
 				}
@@ -235,7 +243,8 @@ class SpeedUp_BrowserCaching {
 	 */
 	private static function make_htaccess_backup() {
 
-		if ( $file_path = self::get_wp_htaccess_file_path() ) {
+		$file_path = self::get_wp_htaccess_file_path();
+		if ( $file_path ) {
 			$backup_file_path = ABSPATH . 'speed-up-backup-' . gmdate( 'Y-m-d_His' ) . '.htaccess';
 
 			if ( copy( $file_path, $backup_file_path ) ) {
@@ -255,7 +264,8 @@ class SpeedUp_BrowserCaching {
 	 */
 	private static function copy_wp_htaccess( $dest ) {
 
-		if ( $source = self::get_wp_htaccess_file_path() ) {
+		$source = self::get_wp_htaccess_file_path();
+		if ( $source ) {
 			return copy( $source, $dest );
 		}
 
@@ -274,7 +284,8 @@ class SpeedUp_BrowserCaching {
 			return false;
 		}
 
-		if ( $file_path = self::get_wp_htaccess_file_path() ) {
+		$file_path = self::get_wp_htaccess_file_path();
+		if ( $file_path ) {
 			return copy( $backup_file_path, $file_path );
 		}
 

@@ -1,0 +1,9 @@
+# Commit puramente meccanici, da saltare in "git blame".
+#
+# GitHub usa questo file automaticamente. In locale lo attiva composer install
+# (vedi bin/install-hooks.php), oppure a mano:
+#     git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Riformattazione secondo i WordPress Coding Standards (solo phpcbf: indentazione,
+# spaziature, quoting). 655 correzioni automatiche, nessun cambio di comportamento.
+430b8a60f6f17635bfeab2587ee82d02c093ddee
