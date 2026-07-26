@@ -2,7 +2,8 @@
 Contributors: nigro.simone
 Donate link: http://paypal.me/snwp
 Tags: browser caching, leverage browser caching, expires headers, gzip compression, htaccess
-Requires at least: 3.5
+Requires at least: 6.0
+Requires PHP: 7.0
 Tested up to: 7.0
 Stable tag: 1.0.13
 License: GPLv2 or later
