@@ -14,6 +14,13 @@
 *.gif binary
 *.mo  binary
 
+# ATTENZIONE: htaccess.txt e' storicamente in CRLF su SVN (nessun svn:eol-style,
+# quindi wordpress.org ne serve i byte grezzi) ed e' cosi' da sempre nel pacchetto
+# scaricato dagli utenti. "-text" disattiva ogni normalizzazione: il passaggio a git
+# non deve cambiare nemmeno un byte di cio' che viene pubblicato.
+# Questa riga sta dopo le regole generali perche' in .gitattributes vince l'ultima.
+htaccess.txt -text
+
 # File di sviluppo esclusi dagli archivi generati da GitHub ("Download ZIP").
 # Nota: cio' che viene pubblicato su wordpress.org e' governato da .distignore.
 /.github        export-ignore
