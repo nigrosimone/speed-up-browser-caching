@@ -75,6 +75,18 @@ composer phpcbf         # correzione automatica dello stile
 I due controlli non bloccanti diventeranno bloccanti quando il conteggio delle violazioni
 arrivera' a zero.
 
+### Rilievi accettati
+
+Il Plugin Check ha un elenco esplicito di rilievi noti e accettati, in
+[`ci.yml`](.github/workflows/ci.yml) sotto `ignore-codes`. Riguardano tutti la stessa cosa:
+il plugin manipola il `.htaccess` con le funzioni native di PHP invece che con
+`WP_Filesystem`. E' l'implementazione originale, in produzione dal 2016; migrare a
+`WP_Filesystem` e' un refactor a se' stante.
+
+L'elenco serve a mantenere il controllo utile: senza, il job sarebbe rosso in
+permanenza e nessuno lo guarderebbe piu'. Con l'elenco, **se diventa rosso e' comparso
+qualcosa di nuovo**. Ogni voce va rimossa da li' quando viene risolta.
+
 ## Struttura del repository
 
 ```
