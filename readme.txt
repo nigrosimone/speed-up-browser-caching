@@ -4,7 +4,7 @@ Donate link: http://paypal.me/snwp
 Tags: browser caching, leverage browser caching, expires headers, gzip compression, htaccess
 Requires at least: 3.5
 Tested up to: 7.0
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,11 @@ Configurations are not required! You just have to install it and after the plugi
 2. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Changelog ==
+
+= 1.0.13 =
+* Fix fatal error on PHP 8 when the .htaccess file cannot be opened
+* Fix file handle leak on deactivation when the plugin section is missing
+* Use gmdate() instead of date() for the backup file name
 
 = 1.0.12 =
 * Tested up to Wordpress 7.0
