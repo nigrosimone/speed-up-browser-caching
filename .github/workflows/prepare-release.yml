@@ -1,8 +1,8 @@
 name: Prepara rilascio
 
-# Passo 1 di 2 del rilascio (variante "con PR"):
-# questo workflow prepara le modifiche e apre una Pull Request.
-# Il rilascio vero parte da solo al merge, tramite release.yml.
+# Passo 1 di 2 del rilascio: prepara le modifiche di versione e apre una Pull
+# Request. Il rilascio vero parte al merge, tramite release.yml.
+# La logica sta in nigrosimone/wp-plugin-ci.
 
 on:
   workflow_dispatch:
@@ -27,63 +27,8 @@ permissions:
 
 jobs:
   prepare:
-    name: Bump versione e apri PR
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      - name: Aggiorna readme.txt e header del plugin
-        run: |
-          php bin/bump-version.php \
-            --version="${{ inputs.version }}" \
-            --tested-up-to="${{ inputs.tested_up_to }}" \
-            --changelog="${{ inputs.changelog }}"
-
-      - name: Verifica coerenza del risultato
-        run: php bin/check-version.php "${{ inputs.version }}"
-
-      - name: Apri la Pull Request
-        uses: peter-evans/create-pull-request@v8
-        with:
-          branch: release/v${{ inputs.version }}
-          delete-branch: true
-          commit-message: "Release ${{ inputs.version }}"
-          title: "Release ${{ inputs.version }}"
-          body: |
-            Rilascio della versione **${{ inputs.version }}**.
-
-            > [!IMPORTANT]
-            > **La CI su questa PR non parte da sola.** Vai su
-            > [**Actions**](../../actions) e approva la run in attesa
-            > ("Approve and run"), altrimenti i check richiesti non compaiono
-            > mai e la PR resta non mergiabile.
-            >
-            > Non e' un errore: questa PR e' stata aperta dal `GITHUB_TOKEN`, e
-            > GitHub non fa partire workflow per eventi generati da se stesso,
-            > per evitare loop infiniti. Si eviterebbe con un Personal Access
-            > Token, ma per una manciata di rilasci l'anno non vale una
-            > credenziale in piu' da gestire e far scadere.
-
-            | | |
-            |---|---|
-            | Versione | `${{ inputs.version }}` |
-            | Tested up to | `${{ inputs.tested_up_to }}` |
-
-            **Changelog**
-            ```
-            ${{ inputs.changelog }}
-            ```
-
-            Controlla il diff qui sotto. **Al merge di questa PR** il plugin viene
-            taggato `v${{ inputs.version }}` e pubblicato automaticamente su
-            wordpress.org: non serve nessun altro intervento manuale.
-
-            Se il deploy su wordpress.org fallisce, il tag risultera' creato ma
-            agli utenti non sara' arrivato nulla: correggi e rilancia
-            **Actions -> Rilascio** spuntando `force`.
-          labels: release
+    uses: nigrosimone/wp-plugin-ci/.github/workflows/plugin-prepare-release.yml@v1
+    with:
+      version: ${{ inputs.version }}
+      tested_up_to: ${{ inputs.tested_up_to }}
+      changelog: ${{ inputs.changelog }}

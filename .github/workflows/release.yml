@@ -1,12 +1,8 @@
 name: Rilascio
 
 # Passo 2 di 2 del rilascio: parte da solo quando su main arriva un commit che
-# alza la versione (tipicamente il merge della PR aperta da prepare-release.yml).
-#
-# Nota sul perche' il trigger e' "push su main" e non "push di un tag":
-# un tag creato con GITHUB_TOKEN non fa scattare altri workflow (GitHub lo impedisce
-# per evitare loop). Tenendo tag, test e deploy in un unico workflow il problema
-# non si pone e non serve un Personal Access Token.
+# alza la versione, tipicamente il merge della PR aperta da prepare-release.
+# La logica sta in nigrosimone/wp-plugin-ci.
 
 on:
   push:
@@ -27,121 +23,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-
-  check:
-    name: Serve un rilascio?
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.detect.outputs.version }}
-      should_release: ${{ steps.detect.outputs.should_release }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      - name: Confronta la versione dichiarata con i tag esistenti
-        id: detect
-        env:
-          FORCE: ${{ inputs.force }}
-        run: |
-          VERSION="$(php bin/plugin-version.php)"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-          if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Versione $VERSION non ancora rilasciata: si procede."
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
-          elif [ "$FORCE" = "true" ]; then
-            # Serve quando il tag e' stato creato ma il deploy su SVN e' fallito:
-            # senza questa via d'uscita un nuovo tentativo non farebbe nulla.
-            echo "Il tag v$VERSION esiste, ma e' stato richiesto force: si riprova."
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Il tag v$VERSION esiste gia': nessun rilascio da fare."
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-          fi
-
   release:
-    name: Pubblica ${{ needs.check.outputs.version }}
-    needs: check
-    if: needs.check.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    environment: wordpress-org
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      - uses: ramsey/composer-install@v4
-
-      # ---- Ultimo cancello prima della pubblicazione -----------------------
-      - name: Sintassi
-        run: php bin/lint.php
-
-      - name: Coerenza versioni
-        run: php bin/check-version.php "${{ needs.check.outputs.version }}"
-
-      - name: Compatibilita PHP
-        run: composer compat
-
-      # --do-not-cache-result: senza, PHPUnit lascia .phpunit.result.cache nella
-      # radice e la action di deploy, che copia dal disco e non da git, lo
-      # pubblicherebbe insieme al plugin.
-      - name: Test
-        run: vendor/bin/phpunit --do-not-cache-result
-
-      # Ultimo cancello prima di scrivere su wordpress.org: ricostruisce il
-      # pacchetto applicando .distignore e fallisce se ci e' finito dentro un
-      # file di sviluppo. Va dopo i test proprio per intercettare gli artefatti
-      # che i test stessi possono aver lasciato.
-      - name: Verifica il contenuto del pacchetto
-        run: bash bin/build-dist.sh "${RUNNER_TEMP}/dist-check"
-
-      # ---- Tag ------------------------------------------------------------
-      # Il tag viene creato prima del deploy: se la pubblicazione fallisce, agli
-      # utenti non e' arrivato nulla. Il passo e' idempotente per permettere di
-      # riprovare con "force" senza dover cancellare il tag a mano.
-      - name: Crea il tag v${{ needs.check.outputs.version }}
-        run: |
-          TAG="v${{ needs.check.outputs.version }}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Il tag $TAG esiste gia': lo riuso."
-            exit 0
-          fi
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release ${{ needs.check.outputs.version }}"
-          git push origin "$TAG"
-
-      # ---- Pubblicazione su wordpress.org ---------------------------------
-      # L'action sincronizza trunk/ e crea tags/VERSION su plugins.svn.wordpress.org,
-      # escludendo quanto elencato in .distignore. Gli asset arrivano da .wordpress-org/.
-      - name: Deploy su WordPress.org
-        id: deploy
-        uses: 10up/action-wordpress-plugin-deploy@stable
-        with:
-          generate-zip: true
-        env:
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          SLUG: speed-up-browser-caching
-          VERSION: ${{ needs.check.outputs.version }}
-          ASSETS_DIR: .wordpress-org
-
-      # ---- Release su GitHub ----------------------------------------------
-      - name: Crea la Release su GitHub
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: v${{ needs.check.outputs.version }}
-          name: v${{ needs.check.outputs.version }}
-          files: ${{ steps.deploy.outputs.zip-path }}
-          generate_release_notes: true
+    uses: nigrosimone/wp-plugin-ci/.github/workflows/plugin-release.yml@v1
+    with:
+      min-php: '7.0-'
+      # Su push il contesto inputs non esiste: || false lo riporta a un booleano.
+      force: ${{ inputs.force || false }}
+    secrets:
+      SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+      SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}

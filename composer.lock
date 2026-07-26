@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6c9179027e2bdde068b2b63a1cbcb21d",
+    "content-hash": "042474a505e667491d48e3ab57e75627",
     "packages": [],
     "packages-dev": [
         {
@@ -232,6 +232,60 @@
                 }
             ],
             "time": "2025-08-01T08:46:24+00:00"
+        },
+        {
+            "name": "nigrosimone/wp-plugin-ci",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nigrosimone/wp-plugin-ci.git",
+                "reference": "61ceedcbb8394b51cac4c24934e5cb5b2442871d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nigrosimone/wp-plugin-ci/zipball/61ceedcbb8394b51cac4c24934e5cb5b2442871d",
+                "reference": "61ceedcbb8394b51cac4c24934e5cb5b2442871d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "bin": [
+                "bin/wp-plugin-lint",
+                "bin/wp-plugin-version",
+                "bin/wp-plugin-check-version",
+                "bin/wp-plugin-bump-version",
+                "bin/wp-plugin-install-hooks"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/Plugin.php"
+                ]
+            },
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Simone Nigro",
+                    "email": "nigro.simone@gmail.com",
+                    "homepage": "https://profiles.wordpress.org/nigrosimone"
+                }
+            ],
+            "description": "Strumenti e workflow condivisi per il rilascio dei plugin WordPress speed-up-*.",
+            "keywords": [
+                "ci",
+                "plugin",
+                "release",
+                "wordpress",
+                "wordpress.org"
+            ],
+            "support": {
+                "source": "https://github.com/nigrosimone/wp-plugin-ci/tree/v1.0.0",
+                "issues": "https://github.com/nigrosimone/wp-plugin-ci/issues"
+            },
+            "time": "2026-07-26T06:48:05+00:00"
         },
         {
             "name": "nikic/php-parser",
