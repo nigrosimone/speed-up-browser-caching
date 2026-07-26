@@ -1,0 +1,19 @@
+# Tutto cio' che elencato qui NON viene pubblicato su wordpress.org.
+# Lo zip scaricato dagli utenti deve contenere solo i file del plugin.
+
+/.git
+/.github
+/.wordpress-org
+/tests
+/bin
+/vendor
+/node_modules
+
+.gitattributes
+.gitignore
+.distignore
+composer.json
+composer.lock
+phpcs.xml.dist
+phpunit.xml.dist
+README.md

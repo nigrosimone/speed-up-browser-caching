@@ -1,0 +1,84 @@
+name: Controllo divergenza SVN
+
+# Rete di sicurezza del modello "git e' la sorgente di verita', SVN e' solo il
+# canale di pubblicazione": se qualcosa cambia su wordpress.org senza passare da
+# qui (una fix del team review, o una modifica manuale via SVN), questo workflow
+# se ne accorge e apre una issue. Non modifica nulla: segnala e basta.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # ogni lunedi alle 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    name: Confronta trunk SVN con main
+    runs-on: ubuntu-latest
+    env:
+      SLUG: speed-up-browser-caching
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installa subversion
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
+      - name: Scarica il trunk pubblicato su wordpress.org
+        run: svn export --quiet "https://plugins.svn.wordpress.org/${SLUG}/trunk" "${RUNNER_TEMP}/svn-trunk"
+
+      # Ricostruisce cio' che il repo pubblicherebbe, applicando .distignore:
+      # e' l'unico confronto sensato, perche' il repo contiene anche file di sviluppo.
+      - name: Ricostruisci il pacchetto a partire dal repo
+        run: |
+          mkdir -p "${RUNNER_TEMP}/git-dist"
+          rsync -a --exclude='.git' --exclude-from='.distignore' ./ "${RUNNER_TEMP}/git-dist/"
+
+      - name: Confronta
+        id: diff
+        run: |
+          if diff -r "${RUNNER_TEMP}/git-dist" "${RUNNER_TEMP}/svn-trunk" > "${RUNNER_TEMP}/drift.txt" 2>&1; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+            echo "Nessuna divergenza: SVN e main sono allineati."
+          else
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+            echo "DIVERGENZA RILEVATA:"
+            cat "${RUNNER_TEMP}/drift.txt"
+          fi
+
+      - name: Apri una issue se c'e' divergenza
+        if: steps.diff.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Una sola issue aperta alla volta per questo problema.
+          EXISTING="$(gh issue list --label svn-drift --state open --json number --jq '.[0].number')"
+          if [ -n "$EXISTING" ]; then
+            echo "Issue #$EXISTING gia' aperta, aggiungo un commento."
+            {
+              echo "La divergenza e' ancora presente al $(date -u '+%Y-%m-%d %H:%M UTC')."
+              echo
+              echo '```diff'
+              head -c 60000 "${RUNNER_TEMP}/drift.txt"
+              echo '```'
+            } | gh issue comment "$EXISTING" --body-file -
+            exit 0
+          fi
+
+          {
+            echo "Il trunk pubblicato su wordpress.org non coincide con \`main\`."
+            echo
+            echo "Significa che qualcuno ha modificato SVN senza passare da questo repository:"
+            echo "puo' essere una fix applicata dal team review di WordPress.org, oppure un commit"
+            echo "SVN fatto a mano. **Le modifiche vanno riportate qui**, altrimenti il prossimo"
+            echo "rilascio le sovrascrivera'."
+            echo
+            echo '```diff'
+            head -c 60000 "${RUNNER_TEMP}/drift.txt"
+            echo '```'
+          } | gh issue create \
+                --title "Divergenza tra SVN (wordpress.org) e main" \
+                --label svn-drift \
+                --body-file -

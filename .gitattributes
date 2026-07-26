@@ -1,0 +1,29 @@
+# Fine riga deterministiche: il repo contiene sempre LF, a prescindere dal
+# core.autocrlf della macchina. Coerente con quanto scriveva release-plugin.ps1.
+* text=auto eol=lf
+
+*.php  text eol=lf
+*.txt  text eol=lf
+*.html text eol=lf
+*.js   text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+
+*.jpg binary
+*.png binary
+*.gif binary
+*.mo  binary
+
+# File di sviluppo esclusi dagli archivi generati da GitHub ("Download ZIP").
+# Nota: cio' che viene pubblicato su wordpress.org e' governato da .distignore.
+/.github        export-ignore
+/tests          export-ignore
+/bin            export-ignore
+/.wordpress-org export-ignore
+.gitattributes  export-ignore
+.gitignore      export-ignore
+.distignore     export-ignore
+phpcs.xml.dist  export-ignore
+phpunit.xml.dist export-ignore
+composer.json   export-ignore
+composer.lock   export-ignore

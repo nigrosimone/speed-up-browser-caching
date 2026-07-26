@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # BLOCCANTI: se falliscono, la PR non si merga.
+  # ---------------------------------------------------------------------------
+
+  lint:
+    name: Sintassi PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.2', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: php -l su tutti i file pubblicati
+        run: php bin/lint.php
+
+  compat:
+    name: Compatibilita PHP 7.0+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      # Analisi statica: copre anche 7.0 e 7.1, che non sono nella matrice runtime.
+      - name: PHPCompatibilityWP
+        run: composer compat
+
+  versions:
+    name: Coerenza versioni
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      # Version: nell'header == Stable tag nel readme, e changelog presente.
+      - name: Verifica header, Stable tag e changelog
+        run: php bin/check-version.php
+
+  test:
+    name: Test PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit
+
+  # ---------------------------------------------------------------------------
+  # INFORMATIVI: mostrano il debito da smaltire senza bloccare il lavoro.
+  # Da promuovere a bloccanti quando il conteggio arriva a zero.
+  # ---------------------------------------------------------------------------
+
+  coding-standards:
+    name: WordPress Coding Standards (informativo)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: PHPCS
+        run: vendor/bin/phpcs --report=summary --report-full
+
+  plugin-check:
+    name: WordPress Plugin Check (informativo)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      # Stessi controlli usati dal team review di wordpress.org.
+      - uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: '.'
+          exclude-directories: 'tests,bin,vendor,node_modules'
