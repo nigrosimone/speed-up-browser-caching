@@ -1,7 +1,7 @@
 === Speed Up - Browser Caching ===
 Contributors: nigro.simone
 Donate link: http://paypal.me/snwp
-Tags: browser cache, cache, caching, performance, speed
+Tags: browser caching, leverage browser caching, expires headers, gzip compression, htaccess
 Requires at least: 3.5
 Tested up to: 7.0
 Stable tag: 1.0.12
