@@ -15,6 +15,12 @@
 .gitignore
 .distignore
 .git-blame-ignore-revs
+
+# Artefatti generati dagli strumenti. Non bastava .gitignore: la action di
+# deploy copia dal disco, non da git, quindi un file ignorato da git ma
+# presente nella cartella finisce comunque su wordpress.org.
+.phpunit.result.cache
+.phpcs-cache
 composer.json
 composer.lock
 phpcs.xml.dist
