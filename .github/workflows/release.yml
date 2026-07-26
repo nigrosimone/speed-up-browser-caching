@@ -93,8 +93,18 @@ jobs:
       - name: Compatibilita PHP
         run: composer compat
 
+      # --do-not-cache-result: senza, PHPUnit lascia .phpunit.result.cache nella
+      # radice e la action di deploy, che copia dal disco e non da git, lo
+      # pubblicherebbe insieme al plugin.
       - name: Test
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --do-not-cache-result
+
+      # Ultimo cancello prima di scrivere su wordpress.org: ricostruisce il
+      # pacchetto applicando .distignore e fallisce se ci e' finito dentro un
+      # file di sviluppo. Va dopo i test proprio per intercettare gli artefatti
+      # che i test stessi possono aver lasciato.
+      - name: Verifica il contenuto del pacchetto
+        run: bash bin/build-dist.sh "${RUNNER_TEMP}/dist-check"
 
       # ---- Tag ------------------------------------------------------------
       # Il tag viene creato prima del deploy: se la pubblicazione fallisce, agli
