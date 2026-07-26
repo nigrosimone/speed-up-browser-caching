@@ -27,6 +27,29 @@ This plugin adds the missing Apache directives to your `.htaccess`:
 | `AddOutputFilterByType` | `mod_deflate` | Compresses text responses before sending them |
 | `AddType` / `AddCharset` | `mod_mime` | Declares correct MIME types and UTF-8, so the rules above match the right files |
 | `FileETag None` + `Header unset ETag` | `mod_headers` | Drops ETags, so browsers trust the expiry above instead of re-checking every file |
+| `Cache-Control: immutable` | `mod_headers` + `mod_setenvif` | On versioned assets only: tells the browser not to revalidate even on reload |
+
+### `immutable`, but only where it's safe
+
+`immutable` means "don't revalidate this, ever" — not even when the visitor reloads the
+page. Applied to everything it would be a trap: a file edited without changing its URL
+would stay stale for a year.
+
+So it's applied only to requests carrying `ver=` in the query string, which is exactly what
+WordPress adds to the CSS and JS it enqueues. Those URLs change when the content changes,
+so skipping revalidation costs nothing.
+
+### MIME types
+
+The font types were the ones from before RFC 8081 (2017) — `application/x-font-ttf`,
+`application/font-woff2`, `font/opentype`. They're now declared as `font/ttf`, `font/woff2`
+and `font/otf`, and JavaScript as `text/javascript` rather than the `application/javascript`
+that RFC 9239 (2022) retired.
+
+The **older names are still listed in the expiry rules**, deliberately. If a file's MIME
+type comes from somewhere else in the server config, it has to keep expiring the way it did
+before: changing only the declaring side would have silently dropped those files out of the
+cache.
 
 The result is fewer requests and less bandwidth on repeat visits, which also feeds into
 PageSpeed and Core Web Vitals scores.
