@@ -27,7 +27,7 @@ jobs:
       matrix:
         php: ['7.2', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -41,14 +41,14 @@ jobs:
     name: Compatibilita PHP 7.0+
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       # Analisi statica: copre anche 7.0 e 7.1, che non sono nella matrice runtime.
       - name: PHPCompatibilityWP
@@ -58,7 +58,7 @@ jobs:
     name: Coerenza versioni
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -77,14 +77,14 @@ jobs:
       matrix:
         php: ['7.4', '8.3']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: PHPUnit
         run: vendor/bin/phpunit
@@ -93,14 +93,14 @@ jobs:
     name: WordPress Coding Standards
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       # Il conteggio delle violazioni e' a zero e deve restarci: se serve
       # disattivare una regola, si disattiva in phpcs.xml.dist con una
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Il controllo va fatto sul pacchetto che riceve l'utente, non sul repo:
       # altrimenti segnala file di sviluppo (.gitignore, phpunit.xml.dist, .github)
