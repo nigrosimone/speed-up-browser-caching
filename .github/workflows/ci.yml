@@ -89,13 +89,8 @@ jobs:
       - name: PHPUnit
         run: vendor/bin/phpunit
 
-  # ---------------------------------------------------------------------------
-  # INFORMATIVI: mostrano il debito da smaltire senza bloccare il lavoro.
-  # Da promuovere a bloccanti quando il conteggio arriva a zero.
-  # ---------------------------------------------------------------------------
-
   coding-standards:
-    name: WordPress Coding Standards (informativo)
+    name: WordPress Coding Standards
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,29 +102,16 @@ jobs:
 
       - uses: ramsey/composer-install@v3
 
-      # Il job resta verde di proposito: il conteggio finisce nel riepilogo della
-      # run, cosi' il debito e' visibile senza che la CI sia perennemente rossa
-      # (una CI sempre rossa smette di essere un segnale). Diventera' bloccante
-      # quando il conteggio arrivera' a zero.
+      # Il conteggio delle violazioni e' a zero e deve restarci: se serve
+      # disattivare una regola, si disattiva in phpcs.xml.dist con una
+      # motivazione, non si lascia passare la violazione.
       - name: PHPCS
-        run: |
-          set +e
-          vendor/bin/phpcs --report=full --report-summary --no-colors | tee phpcs-report.txt
-          set -e
+        run: vendor/bin/phpcs --report=full --report-summary --no-colors
 
-          {
-            echo "### WordPress Coding Standards"
-            echo
-            grep -E "^A TOTAL OF" phpcs-report.txt || echo "Nessuna violazione."
-            echo
-            echo "<details><summary>Rapporto completo</summary>"
-            echo
-            echo '```'
-            head -c 60000 phpcs-report.txt
-            echo '```'
-            echo
-            echo "</details>"
-          } >> "$GITHUB_STEP_SUMMARY"
+  # ---------------------------------------------------------------------------
+  # INFORMATIVO: dipende da Docker e da 391 pacchetti npm, quindi un problema
+  # infrastrutturale non deve bloccare un rilascio.
+  # ---------------------------------------------------------------------------
 
   plugin-check:
     name: WordPress Plugin Check (informativo)

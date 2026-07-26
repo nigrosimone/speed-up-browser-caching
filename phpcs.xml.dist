@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <ruleset name="Speed Up - Browser Caching">
 
-    <description>Regole di stile WordPress. In CI questo ruleset NON blocca la build:
-    serve a mostrare il debito da smaltire progressivamente. La compatibilita' PHP
-    (PHPCompatibilityWP) e' invece bloccante ed e' configurata a parte nel workflow.</description>
+    <description>Regole di stile WordPress. Questo ruleset e' BLOCCANTE in CI: il conteggio
+    delle violazioni e' a zero e deve restarci. Se una regola va disattivata, va
+    disattivata qui con una motivazione esplicita, non ignorata.</description>
 
     <file>.</file>
 
@@ -22,6 +22,17 @@
         <!-- Il plugin e' un singolo file storico: la convenzione class-*.php
              richiederebbe di rinominarlo, rompendo l'installazione esistente. -->
         <exclude name="WordPress.Files.FileName"/>
+
+        <!-- Il plugin manipola il .htaccess con le funzioni native di PHP invece
+             che con WP_Filesystem. E' l'implementazione originale, in produzione
+             dal 2016: migrarla e' un refactor a se' stante, non una correzione di
+             stile. Stesso elenco dichiarato in ci.yml sotto "ignore-codes" per il
+             Plugin Check: le due liste vanno tenute allineate. -->
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fopen"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fwrite"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fclose"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_is_writable"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.rename_rename"/>
     </rule>
 
     <rule ref="WordPress.WP.I18n">

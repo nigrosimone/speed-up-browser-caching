@@ -28,6 +28,9 @@
         "sort-packages": true
     },
     "scripts": {
+        "post-install-cmd": "@php bin/install-hooks.php",
+        "post-update-cmd": "@php bin/install-hooks.php",
+        "install-hooks": "@php bin/install-hooks.php",
         "lint": "@php bin/lint.php",
         "check-version": "@php bin/check-version.php",
         "phpcs": "phpcs",

@@ -3,6 +3,7 @@
 
 /.git
 /.github
+/.githooks
 /.wordpress-org
 /tests
 /bin
@@ -13,6 +14,7 @@
 .gitattributes
 .gitignore
 .distignore
+.git-blame-ignore-revs
 composer.json
 composer.lock
 phpcs.xml.dist
