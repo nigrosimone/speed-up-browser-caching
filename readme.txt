@@ -1,7 +1,7 @@
 === Speed Up - Browser Caching ===
 Contributors: nigro.simone
 Donate link: http://paypal.me/snwp
-Tags: javascript, scripts, css, style, cache, caching, browser, performance, seo, optimize, front-end optimization, performance, speed, web performance optimization, wordpress optimization tool
+Tags: browser cache, cache, caching, performance, speed
 Requires at least: 3.5
 Tested up to: 7.0
 Stable tag: 1.0.12

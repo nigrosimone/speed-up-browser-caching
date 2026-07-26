@@ -12,10 +12,10 @@ use PHPUnit\Framework\TestCase;
 class BrowserCachingTest extends TestCase {
 
     /** Contenuto .htaccess tipico di una installazione WordPress. */
-    const WP_HTACCESS = "# BEGIN WordPress\n<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteBase /\nRewriteRule ^index\\.php$ - [L]\n</IfModule>\n# END WordPress\n";
+    private const WP_HTACCESS = "# BEGIN WordPress\n<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteBase /\nRewriteRule ^index\\.php$ - [L]\n</IfModule>\n# END WordPress\n";
 
-    const SECTION_START = '# BEGIN SpeedUp_BrowserCaching';
-    const SECTION_END   = '# END SpeedUp_BrowserCaching';
+    private const SECTION_START = '# BEGIN SpeedUp_BrowserCaching';
+    private const SECTION_END   = '# END SpeedUp_BrowserCaching';
 
     protected function setUp(): void {
         parent::setUp();
@@ -176,6 +176,65 @@ class BrowserCachingTest extends TestCase {
         $this->assertStringContainsString('# BEGIN WordPress', $contents);
         $this->assertStringContainsString('RewriteRule ^index\\.php$ - [L]', $contents);
         $this->assertStringContainsString('# END WordPress', $contents);
+    }
+
+    /**
+     * Percorso di uscita anticipata: la sezione del plugin non c'e'.
+     *
+     * E' il ramo in cui mancava la chiusura del file handle: si usciva con
+     * "return false" saltando la fclose() che stava dopo il blocco if.
+     */
+    public function test_remove_htaccess_rule_non_danneggia_un_htaccess_senza_la_sezione() {
+        $this->givenWordPressHtaccess();
+
+        $this->assertFalse(
+            SpeedUp_BrowserCaching::remove_htaccess_rule(),
+            'Senza la sezione del plugin non c\'e\' nulla da rimuovere.'
+        );
+
+        $this->assertSame(
+            self::WP_HTACCESS,
+            $this->htaccessContents(),
+            'Il .htaccess dell\'utente deve restare intatto.'
+        );
+    }
+
+    /**
+     * Il nome del file di backup deve basarsi su UTC e non sul fuso del server.
+     *
+     * Il test forza un fuso a UTC+14: con date() lo scarto sarebbe di 14 ore,
+     * quindi la differenza rispetto a time() rende il difetto inequivocabile
+     * anche su un runner che gira gia' in UTC.
+     */
+    public function test_il_nome_del_backup_usa_un_timestamp_utc() {
+        $original_timezone = date_default_timezone_get();
+        date_default_timezone_set('Pacific/Kiritimati');
+
+        try {
+            $this->givenWordPressHtaccess();
+            SpeedUp_BrowserCaching::add_htaccess_rule();
+
+            $backups = glob(SPEEDUP_TEST_ROOT . 'speed-up-backup-*.htaccess');
+            $this->assertNotEmpty($backups);
+
+            $matched = preg_match(
+                '/speed-up-backup-(\d{4}-\d{2}-\d{2}_\d{6})\.htaccess$/',
+                basename($backups[0]),
+                $parts
+            );
+            $this->assertSame(1, $matched, 'Nome del backup nel formato atteso.');
+
+            $stamp = DateTime::createFromFormat('Y-m-d_His', $parts[1], new DateTimeZone('UTC'));
+            $this->assertInstanceOf('DateTime', $stamp);
+
+            $this->assertLessThan(
+                120,
+                abs($stamp->getTimestamp() - time()),
+                'Il timestamp del backup deve essere UTC, non l\'ora locale del server.'
+            );
+        } finally {
+            date_default_timezone_set($original_timezone);
+        }
     }
 
     public function test_ciclo_attiva_disattiva_non_lascia_direttive_di_caching() {

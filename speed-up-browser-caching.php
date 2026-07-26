@@ -127,10 +127,11 @@ class SpeedUp_BrowserCaching {
                             
                 // flush all buffer
                 $htaccess_is_edited = fflush($file_handle);
+
+                // Close file
+                fclose($file_handle);
             }
-            // Close file
-            fclose($file_handle);
-            
+
             if( $htaccess_is_edited ){
                 if( self::make_htaccess_backup() ){
                     return rename($temp_htaccess, $original_htaccess);
@@ -198,6 +199,7 @@ class SpeedUp_BrowserCaching {
                 
                 // mhhh this is strange!
                 if( $speed_up_directives !== false ){
+                    fclose($file_handle);
                     return false;
                 }
                             
@@ -211,10 +213,11 @@ class SpeedUp_BrowserCaching {
 
                 // flush all buffer
                 $htaccess_is_edited = fflush($file_handle);
+
+                // close file
+                fclose($file_handle);
             }
-            // close file
-            fclose($file_handle);
-            
+
             if( $htaccess_is_edited ){
                 if( self::make_htaccess_backup() ){
                     return rename($temp_htaccess, $original_htaccess);
@@ -234,7 +237,7 @@ class SpeedUp_BrowserCaching {
     private static function make_htaccess_backup(){
         
         if( $file_path = self::get_wp_htaccess_file_path() ){
-            $backup_file_path = ABSPATH . 'speed-up-backup-' . date('Y-m-d_His') .'.htaccess';
+            $backup_file_path = ABSPATH . 'speed-up-backup-' . gmdate('Y-m-d_His') .'.htaccess';
             
             if( copy($file_path, $backup_file_path)) {
                 return $backup_file_path;
