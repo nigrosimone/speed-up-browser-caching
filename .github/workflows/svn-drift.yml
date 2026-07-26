@@ -32,9 +32,7 @@ jobs:
       # Ricostruisce cio' che il repo pubblicherebbe, applicando .distignore:
       # e' l'unico confronto sensato, perche' il repo contiene anche file di sviluppo.
       - name: Ricostruisci il pacchetto a partire dal repo
-        run: |
-          mkdir -p "${RUNNER_TEMP}/git-dist"
-          rsync -a --exclude='.git' --exclude-from='.distignore' ./ "${RUNNER_TEMP}/git-dist/"
+        run: bash bin/build-dist.sh "${RUNNER_TEMP}/git-dist"
 
       - name: Confronta
         id: diff

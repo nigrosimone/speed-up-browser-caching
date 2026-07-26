@@ -97,7 +97,6 @@ jobs:
   coding-standards:
     name: WordPress Coding Standards (informativo)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -108,8 +107,29 @@ jobs:
 
       - uses: ramsey/composer-install@v3
 
+      # Il job resta verde di proposito: il conteggio finisce nel riepilogo della
+      # run, cosi' il debito e' visibile senza che la CI sia perennemente rossa
+      # (una CI sempre rossa smette di essere un segnale). Diventera' bloccante
+      # quando il conteggio arrivera' a zero.
       - name: PHPCS
-        run: vendor/bin/phpcs --report=summary --report-full
+        run: |
+          set +e
+          vendor/bin/phpcs --report=full --report-summary --no-colors | tee phpcs-report.txt
+          set -e
+
+          {
+            echo "### WordPress Coding Standards"
+            echo
+            grep -E "^A TOTAL OF" phpcs-report.txt || echo "Nessuna violazione."
+            echo
+            echo "<details><summary>Rapporto completo</summary>"
+            echo
+            echo '```'
+            head -c 60000 phpcs-report.txt
+            echo '```'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   plugin-check:
     name: WordPress Plugin Check (informativo)
@@ -118,8 +138,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Il controllo va fatto sul pacchetto che riceve l'utente, non sul repo:
+      # altrimenti segnala file di sviluppo (.gitignore, phpunit.xml.dist, .github)
+      # che .distignore esclude gia' dalla pubblicazione.
+      - name: Ricostruisci il pacchetto pubblicato
+        run: bash bin/build-dist.sh build
+
       # Stessi controlli usati dal team review di wordpress.org.
       - uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: '.'
-          exclude-directories: 'tests,bin,vendor,node_modules'
+          build-dir: './build'
